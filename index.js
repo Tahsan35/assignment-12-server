@@ -31,7 +31,15 @@ async function run() {
             const query = {};
             const result = await partsCollection.find(query).toArray();
             res.send(result);
+        });
+        // get a single parts from mongodb 
+        app.get('/parts/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await partsCollection.findOne(query);
+            res.send(result);
         })
+
         console.log('database connected');
     }
     finally {
