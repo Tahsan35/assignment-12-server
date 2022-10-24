@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
+
 const port = process.env.PORT || 5000;
 
 const app = express()
@@ -25,6 +27,7 @@ async function run() {
     try {
         await client.connect();
         const partsCollection = client.db('webTech-House').collection('parts');
+        const usersCollection = client.db('webTech-House').collection('users');
 
         // get all parts
         app.get('/parts', async (req, res) => {
@@ -38,6 +41,19 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const result = await partsCollection.findOne(query);
             res.send(result);
+        });
+        // post all login or singup user 
+        app.put('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: user,
+            };
+            const result = await usersCollection.updateOne(filter, updatedDoc, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN);
+            res.send({ result, token })
         })
 
         console.log('database connected');
