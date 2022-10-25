@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
 const app = express()
@@ -43,7 +43,12 @@ async function run() {
                 next();
             })
         }
-
+        // post parts 
+        app.post('/parts', verifyToken, async (req, res) => {
+            const newParts = req.body;
+            const result = await partsCollection.insertOne(newParts);
+            res.send(result);
+        });
         // get all parts
         app.get('/parts', async (req, res) => {
             const query = {};
@@ -57,6 +62,13 @@ async function run() {
             const result = await partsCollection.findOne(query);
             res.send(result);
         });
+        // delete a single parts 
+        app.delete('/parts/:id', verifyToken, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await partsCollection.deleteOne(filter);
+            res.send(result);
+        })
         // post all login or singup user 
         app.put('/users/:email', async (req, res) => {
             const email = req.params.email;
@@ -69,7 +81,7 @@ async function run() {
             const result = await usersCollection.updateOne(filter, updatedDoc, options);
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN);
             res.send({ result, token })
-        })
+        });
         app.put('/users/admin/:email', async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
@@ -78,7 +90,7 @@ async function run() {
             };
             const result = await usersCollection.updateOne(filter, updateDoc);
             res.send(result);
-        })
+        });
         // get admin email
         app.get('/admin/:email', async (req, res) => {
             const email = req.params.email;
@@ -86,6 +98,18 @@ async function run() {
             const isAdmin = user.role === 'admin';
             res.send({ admin: isAdmin })
         })
+        // get All users from Database
+        app.get('/users', verifyToken, async (req, res) => {
+            const result = await usersCollection.find().toArray();
+            res.send(result);
+        });
+        // get a single users from mongodb 
+        app.get('/users/:id', verifyToken, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await usersCollection.findOne(query);
+            res.send(result);
+        });
 
         console.log('database connected');
     }
