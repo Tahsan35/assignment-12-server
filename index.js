@@ -70,6 +70,15 @@ async function run() {
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN);
             res.send({ result, token })
         })
+        app.put('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' },
+            };
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        })
 
         console.log('database connected');
     }
